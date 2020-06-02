@@ -1,11 +1,10 @@
 import express from 'express';
+import routes from './routes';
 
 const app = express();
 
-app.get('/user', (req, res) => {
-  res.json({
-    ok: 'ta funcionado',
-  });
-});
+app.use(express.json()); // config para aceiatr json
 
-app.listen(3333);
+app.use(routes); // rotas do app
+
+app.listen(3333); // porta
