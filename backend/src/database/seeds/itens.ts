@@ -1,6 +1,6 @@
 import Knex from 'knex';
 
-export async function seed(knex: Knex) {
+export default async function seed(knex: Knex) {
   await knex('itens').insert([
     {
       title: 'Lâmpadas',

@@ -1,90 +1,86 @@
-import {Request,Response} from 'express';
+import { Request, Response } from 'express';
 import knex from '../database/conection';
 
-class PointsController{
-  async create(req:Request, res:Response){
-      const {
-        name,
-        email,
-        whatsapp,
-        latitude,
-        longitude,
-        city,
-        uf,
-        itens
-      } = req.body;
+class PointsController {
+  async create(req: Request, res: Response) {
+    const {
+      name,
+      email,
+      whatsapp,
+      latitude,
+      longitude,
+      city,
+      uf,
+      itens,
+    } = req.body;
 
-      const trx = await knex.transaction();
+    const trx = await knex.transaction();
 
-      const point = {
-        image:'image-fake',
-        name,
-        email,
-        whatsapp,
-        latitude,
-        longitude,
-        city,
-        uf,
-      }
+    const point = {
+      image: 'image-fake',
+      name,
+      email,
+      whatsapp,
+      latitude,
+      longitude,
+      city,
+      uf,
+    };
 
-      const insertdIds = await trx('points').insert(point);
+    const insertdIds = await trx('points').insert(point);
 
-      const point_id = insertdIds[0]
+    const point_id = insertdIds[0];
 
-      const pointItens = itens.map((item_id:number)=>{
-        return{
-          item_id,
-          point_id,
-        };
+    const pointItens = itens.map((item_id: number) => {
+      return {
+        item_id,
+        point_id,
+      };
+    });
+
+    await trx('point_itens').insert(pointItens);
+
+    await trx.commit();
+
+    return res.json({ id: point_id, ...point });
+  }
+
+  async show(req: Request, res: Response) {
+    const { id } = req.params;
+
+    const point = await knex('points').where('id', id).first();
+
+    if (!point) {
+      return res.status(404).json({
+        message: 'point not found',
       });
-
-      await trx('point_itens').insert(pointItens)
-
-      await trx.commit();
-
-      return res.json({id:point_id
-        ,...point,});
-
     }
 
-  async show(req:Request,res:Response){
-      const {id} = req.params;
+    const itens = await knex('itens')
+      .join('point_itens', 'itens.id', '=', 'point_itens.item_id')
+      .where('point_itens.point_id', id)
+      .select('itens.title');
 
-      const point = await knex('points').where('id',id).first()
+    return res.json({ itens, point });
+  }
 
-      if(!point){
-        return res.status(404).json({
-          message:'point not found'
-        })
-      }
+  async index(req: Request, res: Response) {
+    const { city, uf, itens } = req.query;
 
-      const itens = await knex('itens')
-        .join('point_itens','itens.id','=','point_itens.item_id')
-        .where('point_itens.point_id',id)
-        .select('itens.title');
+    const parseItens = String(itens)
+      .split(',')
+      .map((item) => Number(item.trim()));
 
-      return res.json({itens, point});
-
-    }
-
-  async index(req:Request,res:Response){
-      const {city, uf, itens} = req.query;
-
-      const parseItens = String(itens)
-        .split(',')
-        .map(item=>Number(item.trim()));
-
-        const points = await knex('points')
-      .join('point_itens','points.id','=','point_itens.point_id')
-      .whereIn('point_itens.item_id',parseItens)
+    const points = await knex('points')
+      .join('point_itens', 'points.id', '=', 'point_itens.point_id')
+      .whereIn('point_itens.item_id', parseItens)
       .where('points.city', String(city))
       .where('points.uf', String(uf))
       .distinct()
       .select('points.*');
 
-      return res.json(points);
-    }
+    return res.json(points);
   }
+}
 
-
-export default PointsController
+export default PointsController;
