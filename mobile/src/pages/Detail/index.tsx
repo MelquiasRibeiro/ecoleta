@@ -1,13 +1,14 @@
 import {ImageBackground ,View,Image, StyleSheet,Text,TouchableOpacity } from 'react-native';
 import React from 'react';
-import {Feather} from '@expo/vector-icons'
+import {Feather, FontAwesome} from '@expo/vector-icons'
 import {useNavigation} from '@react-navigation/native'
-
+import Constants from 'expo-constants'
+import {RectButton} from 'react-native-gesture-handler';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 32,
-    paddingTop: 20,
+    paddingTop: 20 + Constants.statusBarHeight,
   },
 
   pointImage: {
@@ -86,11 +87,43 @@ const Detail: React.FC = () => {
   }
 
   return (
+    <>
     <View style={styles.container}>
       <TouchableOpacity  onPress={handleback}>
-      <Feather name="arrow-left" size={20} color='#34cd79' />
+        <Feather name="arrow-left" size={20} color='#34cd79' />
       </TouchableOpacity>
+
+      <Image style={styles.pointImage} source={{uri:'https://unsplash.com/photos/kr_88BakygA'}}/>
+      <Text style={styles.pointName}>
+          Mercadinho do seu zé
+      </Text>
+      <Text style={styles.pointItems}>
+        Oléo de Cozinha, Papelão e Organicaos
+      </Text>
+      <View style={styles.address}>
+          <Text style={styles.addressTitle}>
+            Rua da Ata Nº 08, Lima Verde 
+          </Text>
+          <Text style={styles.addressContent}>
+            São Luis, MA
+          </Text>
+      </View>
     </View>
+    <View style={styles.footer}>
+      <RectButton style={styles.button}>
+        <FontAwesome name="whatsapp" color="#fff" size={20}/>
+        <Text style={styles.buttonText}>
+            WhatsApp
+        </Text>
+      </RectButton>
+      <RectButton style={styles.button}>
+        <Feather name="mail" color="#fff" size={20}/>
+        <Text style={styles.buttonText}>
+            E-mail
+        </Text>
+      </RectButton>
+    </View>
+    </>
     );
 }
 
