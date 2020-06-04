@@ -1,3 +1,8 @@
+import {ImageBackground ,View,Image, StyleSheet,Text,TouchableOpacity } from 'react-native';
+import React from 'react';
+import {Feather} from '@expo/vector-icons'
+import {useNavigation} from '@react-navigation/native'
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -71,3 +76,22 @@ const styles = StyleSheet.create({
     fontFamily: 'Roboto_500Medium',
   },
 });
+
+
+const Detail: React.FC = () => {
+  const navigation = useNavigation();
+
+  function handleback(){
+    navigation.goBack()
+  }
+
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity  onPress={handleback}>
+      <Feather name="arrow-left" size={20} color='#34cd79' />
+      </TouchableOpacity>
+    </View>
+    );
+}
+
+export default Detail;
