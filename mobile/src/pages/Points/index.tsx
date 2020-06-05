@@ -1,10 +1,14 @@
-import React from 'react';
-import {TouchableOpacity ,View,Image, StyleSheet,Text, ScrollView, } from 'react-native';
-import Constants from 'expo-constants'
-import {Feather} from '@expo/vector-icons'
-import {useNavigation} from '@react-navigation/native'
+import React,{useEffect,useState} from 'react';
+import {Alert,TouchableOpacity ,View,Image, StyleSheet,Text, ScrollView, } from 'react-native';
+import Constants from 'expo-constants';
+import {Feather} from '@expo/vector-icons';
+import {useNavigation} from '@react-navigation/native';
 import MapViwe,{Marker} from 'react-native-maps';
-import  {SvgUri} from  'react-native-svg'
+import  {SvgUri} from  'react-native-svg';
+import * as Location from 'expo-location';
+import api from '../../services/api';
+
+
 const styles = StyleSheet.create({
    container: {
      flex: 1,
@@ -102,16 +106,79 @@ const styles = StyleSheet.create({
    },
  });
 
+interface Item {
+  id: number;
+  title: string;
+  imageurl: string;
+}
+interface Point{
+  id:number;
+  name:string;
+  image:string;
+  latitude:number;
+  longitude:number;
+
+}
+
 const Points: React.FC = () => {
+  const [points,setPoints] = useState<Point[]>([])
+  const [itens,setItens] = useState<Item[]>([])
+  const [selectedItens,setSelectedItens] =useState<number[]>([])
+  const [initialPosition,setInitialPosition] =useState<[number,number]>([0,0])
+
+
   const navigation = useNavigation();
 
   function handleback(){
     navigation.goBack()
   }
 
-  function handleNavigateToDetails(){
-    navigation.navigate('Details')
+  function handleNavigateToDetails(id:number){
+    navigation.navigate('Details',{point_id:id})
   }
+  
+  useEffect(() => {
+      api.get('/itens').then(response =>{
+        setItens(response.data)
+      })
+  }, [])
+
+  useEffect(() => {
+    async function loadPosition(){
+      const {status} = await Location.requestPermissionsAsync()  
+      if(status !== 'granted'){
+        Alert.alert('Ooops...',"Precisamos da sua localização")
+      }
+
+      const location = await Location.getCurrentPositionAsync();
+      const {latitude,longitude} = location.coords
+      setInitialPosition([latitude,longitude])
+    }
+    loadPosition()
+  }, [])
+    useEffect(() => {
+     api.get('/point',{
+       params:{
+         city: "São José dos Basílios",
+         uf:"MA",
+         itens: [1],
+       }
+     }).then(respose=>{
+       setPoints(respose.data)
+     })
+    }, [])
+
+  function handleSelectItem(id:number){
+    const alredySelected = selectedItens.findIndex(item =>item ===id)
+    
+    if(alredySelected >=0){
+       const filteredItens = selectedItens.filter(item => item !== id);
+       setSelectedItens(filteredItens);
+   }else{
+        setSelectedItens([...selectedItens,id])
+    }
+
+   }
   
   return (
     <>
@@ -126,62 +193,54 @@ const Points: React.FC = () => {
       Encontre no mapa um ponto de coleta.
     </Text>
       <View style={styles.mapContainer}>
-        <MapViwe 
+        {initialPosition[0]!==0 && (<MapViwe 
           style={styles.map} 
           initialRegion={{ 
-            latitude: -2.4989315, 
-            longitude: -44.1934806, 
+            latitude: initialPosition[0], 
+            longitude: initialPosition[1], 
             latitudeDelta:0.014,
             longitudeDelta:0.014,
             }}>
-          <Marker 
+         {points.map(point=>( 
+         <Marker 
+          key={point.id}
           style={styles.mapMarker}
           coordinate={{
-            latitude: -2.4989315, 
-            longitude: -44.1934806
+            latitude: point.latitude, 
+            longitude: point.longitude
             }}
-          onPress={handleNavigateToDetails}
+          onPress={()=>handleNavigateToDetails(point.id)}
             >
           <View style={styles.mapMarkerContainer}>
               <Image 
               style={styles.mapMarkerImage}
-              source={{uri:'https://unsplash.com/photos/kr_88BakygA'}}/>
+              source={{uri:'https://reactnative.dev/img/tiny_logo.png'}}/>
               <Text style={styles.mapMarkerTitle}>
-                  Mercadinho
+                 {point.name}
               </Text>
           </View>    
-          </Marker>
-        </MapViwe>
+          </Marker>))}
+        </MapViwe>)}
       </View>
     </View>
     <View style={styles.itemsContainer}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{
         paddingHorizontal:16
       }}>
-        <TouchableOpacity style={styles.item} onPress={()=>{}}>
-          <SvgUri width={42} height={42} uri="http://10.0.0.105:3333/uploads/lampadas.svg"/>
-          <Text style={styles.itemTitle}>
-            Lampada
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.item} onPress={()=>{}}>
-          <SvgUri width={42} height={42} uri="http://10.0.0.105:3333/uploads/lampadas.svg"/>
-          <Text style={styles.itemTitle}>
-            Lampada
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.item} onPress={()=>{}}>
-          <SvgUri width={42} height={42} uri="http://10.0.0.105:3333/uploads/lampadas.svg"/>
-          <Text style={styles.itemTitle}>
-            Lampada
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.item} onPress={()=>{}}>
-          <SvgUri width={42} height={42} uri="http://10.0.0.105:3333/uploads/lampadas.svg"/>
-          <Text style={styles.itemTitle}>
-            Lampada
-          </Text>
-        </TouchableOpacity>
+        {itens.map(item=>(
+           <TouchableOpacity 
+           onPress={()=>handleSelectItem(item.id)} 
+           style={selectedItens.includes(item.id)? [styles.item, styles.selectedItem] :styles.item } 
+           key={String(item.id)}
+           activeOpacity={0.7}
+           >
+           <SvgUri width={42} height={42} uri={item.imageurl}/>
+           <Text style={styles.itemTitle}>
+             {item.title}
+           </Text>
+         </TouchableOpacity>
+        ))
+         }
       </ScrollView>
     </View>
     </>

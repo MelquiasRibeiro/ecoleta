@@ -1,9 +1,16 @@
-import {ImageBackground ,View,Image, StyleSheet,Text,TouchableOpacity } from 'react-native';
-import React from 'react';
+import React,{useEffect,useState} from 'react';
+import {Linking ,View,Image, StyleSheet,Text,TouchableOpacity } from 'react-native';
 import {Feather, FontAwesome} from '@expo/vector-icons'
-import {useNavigation} from '@react-navigation/native'
+import {useNavigation,useRoute} from '@react-navigation/native'
 import Constants from 'expo-constants'
+import * as MailComposer from 'expo-mail-composer';
 import {RectButton} from 'react-native-gesture-handler';
+import api from '../../services/api';
+
+
+
+
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -79,11 +86,56 @@ const styles = StyleSheet.create({
 });
 
 
-const Detail: React.FC = () => {
-  const navigation = useNavigation();
 
+interface Params{
+  point_id:number;
+}
+
+interface Data{
+ point: {
+   image:string;
+   name: string;
+   whatsapp: string;
+   email: string;
+   city: string;
+   uf: string;
+ };
+ itens: {
+   title: string
+ }[];
+}
+
+const Detail: React.FC = () => {
+  const [data, setData] = useState<Data>({} as Data)
+
+  const navigation = useNavigation();
+  const route = useRoute();
+
+  const routeParams =route.params as Params;
+  useEffect(() => {
+    api.get(`/point/${routeParams.point_id}`).then(response=>{
+      setData(response.data)
+    })  
+  }, [])
+
+  function handleComposeMail(){
+    MailComposer.composeAsync({
+      subject: 'Interesse na coleta de resíduos',
+      recipients:[ data.point.email],
+    })
+
+  }
+  function handleWhatsApp(){
+    Linking.openURL(`whatsapp://send?phone=${data.point.whatsapp}&text=Olá,tenho interesse em recolher seus matériais recicláveis`)
+
+  }
+  
   function handleback(){
     navigation.goBack()
+  }
+
+  if(!data.point){
+    return null;
   }
 
   return (
@@ -93,30 +145,30 @@ const Detail: React.FC = () => {
         <Feather name="arrow-left" size={20} color='#34cd79' />
       </TouchableOpacity>
 
-      <Image style={styles.pointImage} source={{uri:'https://unsplash.com/photos/kr_88BakygA'}}/>
+      <Image style={styles.pointImage} source={{uri:'https://reactnative.dev/img/tiny_logo.png'}}/>
       <Text style={styles.pointName}>
-          Mercadinho do seu zé
+         {data.point.name}
       </Text>
       <Text style={styles.pointItems}>
-        Oléo de Cozinha, Papelão e Organicaos
+        {data.itens.map(item=>item.title).join(', ')}
       </Text>
       <View style={styles.address}>
           <Text style={styles.addressTitle}>
             Rua da Ata Nº 08, Lima Verde 
           </Text>
           <Text style={styles.addressContent}>
-            São Luis, MA
+            {`${data.point.city}, ${data.point.uf}`}
           </Text>
       </View>
     </View>
     <View style={styles.footer}>
-      <RectButton style={styles.button}>
+      <RectButton style={styles.button} onPress={handleWhatsApp}>
         <FontAwesome name="whatsapp" color="#fff" size={20}/>
         <Text style={styles.buttonText}>
             WhatsApp
         </Text>
       </RectButton>
-      <RectButton style={styles.button}>
+      <RectButton style={styles.button} onPress={handleComposeMail}>
         <Feather name="mail" color="#fff" size={20}/>
         <Text style={styles.buttonText}>
             E-mail
