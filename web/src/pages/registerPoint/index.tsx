@@ -8,6 +8,7 @@ import axios from 'axios';
 import './style.css';
 import logo from '../../assets/logo.svg';
 import api from '../../services/api';
+import Dropzone from '../../components/Dropzone/index';
 
 interface Item{
     id:number;
@@ -21,7 +22,9 @@ interface IBGEUFResponse{
 interface IBGECityResponse{
     nome:string;
 }
+
 const RegisterPoint:React.FC = () => {
+    
     const [itens,setItens]=useState<Item[]>([]);
     const [erro,setError] = useState()
     const [uf,setUf]=useState<string[]>([]);
@@ -29,23 +32,29 @@ const RegisterPoint:React.FC = () => {
     const [selectedUf,setSelectedUf]=useState('0');
     const [selectedCity,setSelectedCity]=useState('0');
     const [selectedPosition,setSelectedPosition] = useState<[number,number]>([0,0])
-    const [currentPosition,setCurrentPosition] = useState<[number,number]>([-10.183056, -48.333611])
+    const [currentPosition,setCurrentPosition] = useState<[number,number]>([0,0])
     const [formData,setFormData]= useState({
         name:'',
         email:'',
         whatsapp:'',
     })
     const [selectedItens,setSelectedItens]=useState<number[]>([])
+    const [selectedFile,setSelectedFile] = useState<File>();
     
     const history = useHistory();
     
     
+    //get initial position
     useEffect(() => {
       navigator.geolocation.getCurrentPosition(position=>{
           const {latitude,longitude} =position.coords
           setCurrentPosition([latitude,longitude])
+
       })
     }, [])
+
+    
+    //get item images
     useEffect(() => {
         api.get('/itens').then(response =>{
             setItens(response.data)
@@ -58,6 +67,8 @@ const RegisterPoint:React.FC = () => {
         )
     }, [erro])
 
+    
+    //get UFs
     useEffect(() => {
         axios.get<IBGEUFResponse[]>('https://servicodados.ibge.gov.br/api/v1/localidades/estados').then(response=>{
             const initials = response.data.map(uf => uf.sigla);
@@ -68,10 +79,15 @@ const RegisterPoint:React.FC = () => {
         })
 
     }, [erro])
+
+    
+    //get selected UF
     function handleSelectUf(e:ChangeEvent<HTMLSelectElement>){
         setSelectedUf(e.target.value)
     }
 
+    
+    //get values from text inputs
     function handleInputChange(e:ChangeEvent<HTMLInputElement>){
         const {name,value} = e.target;
         console.log(name,value)
@@ -79,6 +95,8 @@ const RegisterPoint:React.FC = () => {
 
     }
 
+    
+    //control selected itens
     function handleSelectItem(id:number){
      const alredySelected = selectedItens.findIndex(item =>item ===id)
      
@@ -91,12 +109,13 @@ const RegisterPoint:React.FC = () => {
 
     }
 
+    
+    //get cities 
     useEffect(() => {
         
     if(selectedUf === '0'){
         return
     }
-
     axios.get<IBGECityResponse[]>(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedUf}/municipios`).then(response=>{
           const cityName = response.data.map(city=>(
                city.nome
@@ -108,12 +127,20 @@ const RegisterPoint:React.FC = () => {
      })
     }, [erro, selectedUf])
 
+
+    //get selected city
     function handleSelectCity(e:ChangeEvent<HTMLSelectElement>){
         setSelectedCity(e.target.value)
     }
+
+
+    //get position selected
     function handleMapClick(e:LeafletMouseEvent){
         setSelectedPosition([e.latlng.lat,e.latlng.lng])
     }
+
+
+    //post to api to register
     async function handleRegister(e:FormEvent){
         e.preventDefault();
 
@@ -123,33 +150,49 @@ const RegisterPoint:React.FC = () => {
         const [latitude,longitude ] = selectedPosition;
         const itens = selectedItens;
 
-        const data = {
-            name,
-            email,
-            whatsapp,
-            latitude,
-            longitude,
-            city,
-            uf,
-            itens,
-        }
+        const data = new FormData(); 
+        
+            data.append('name', name);
+            data.append('email', email);
+            data.append('whatsapp', whatsapp);
+            data.append('latitude', String(latitude));
+            data.append('longitude', String(longitude));
+            data.append('city', city);
+            data.append('uf', uf);
+            data.append('itens', itens.join(','));
+            if(selectedFile){
+                data.append('image',selectedFile )
+            }
+        
         await api.post('/point',data)
         alert('Pronto, criei')
         history.push('/')
     }
 
+
+
     return (
         <div id="page-create-point">
             <header>
                 <img src={logo} alt="Ecoleta"/>
-                <Link to="/" ><FiArrowLeft/>Volltar para home</Link>
+                <Link to="/" >
+                    <FiArrowLeft/>
+                    Volltar para home
+                </Link>
             </header>
-            <form onSubmit={handleRegister}>
-                <h1>Cadastro do<br/>ponto de coleta</h1>
+            <form 
+            onSubmit={handleRegister}>
+                <h1>Cadastro do <br/>
+                    ponto de coleta
+                </h1>
                 <fieldset>
                     <legend>
                         <h2>Dados</h2>
                     </legend>
+                        <label >           
+                        Imagem
+                        </label>
+                       <Dropzone onFileUploaded={setSelectedFile}/>
                     <div className="field">
                         <label htmlFor="name">           
                         Nome da entidade
@@ -194,10 +237,14 @@ const RegisterPoint:React.FC = () => {
                         <h2>Endereço</h2>
                         <span>selecione seu endereço no mapa</span>
                     </legend>
-                    <Map  center={currentPosition}zoom={15} onclick={handleMapClick}>
+                    <Map  
+                    center={currentPosition}
+                    zoom={15} 
+                    onclick={handleMapClick}>
                         <TileLayer attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
-                    <Marker position={selectedPosition}/>
+                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+                        <Marker 
+                        position={selectedPosition}/>
                     </Map>
                     <div className="field-group">
                         <div className="field">
