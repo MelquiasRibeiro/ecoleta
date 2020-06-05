@@ -123,13 +123,13 @@ const Detail: React.FC = () => {
       subject: 'Interesse na coleta de resíduos',
       recipients:[ data.point.email],
     })
-
   }
+  
   function handleWhatsApp(){
     Linking.openURL(`whatsapp://send?phone=${data.point.whatsapp}&text=Olá,tenho interesse em recolher seus matériais recicláveis`)
 
   }
-  
+
   function handleback(){
     navigation.goBack()
   }

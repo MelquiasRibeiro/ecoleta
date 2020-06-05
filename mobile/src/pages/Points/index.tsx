@@ -2,7 +2,7 @@ import React,{useEffect,useState} from 'react';
 import {Alert,TouchableOpacity ,View,Image, StyleSheet,Text, ScrollView, } from 'react-native';
 import Constants from 'expo-constants';
 import {Feather} from '@expo/vector-icons';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation,useRoute} from '@react-navigation/native'
 import MapViwe,{Marker} from 'react-native-maps';
 import  {SvgUri} from  'react-native-svg';
 import * as Location from 'expo-location';
@@ -119,6 +119,10 @@ interface Point{
   longitude:number;
 
 }
+interface Params{
+  uf:string;
+  city:string;
+}
 
 const Points: React.FC = () => {
   const [points,setPoints] = useState<Point[]>([])
@@ -126,6 +130,8 @@ const Points: React.FC = () => {
   const [selectedItens,setSelectedItens] =useState<number[]>([])
   const [initialPosition,setInitialPosition] =useState<[number,number]>([0,0])
 
+  const route = useRoute();
+  const routeParams =route.params as Params;
 
   const navigation = useNavigation();
 
@@ -159,14 +165,14 @@ const Points: React.FC = () => {
     useEffect(() => {
      api.get('/point',{
        params:{
-         city: "São José dos Basílios",
-         uf:"MA",
-         itens: [1],
+         city: routeParams.city,
+         uf:routeParams.uf,
+         itens: selectedItens,
        }
      }).then(respose=>{
        setPoints(respose.data)
      })
-    }, [])
+    }, [selectedItens])
 
   function handleSelectItem(id:number){
     const alredySelected = selectedItens.findIndex(item =>item ===id)
