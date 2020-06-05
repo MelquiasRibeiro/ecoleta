@@ -115,6 +115,7 @@ interface Point{
   id:number;
   name:string;
   image:string;
+  imageurl:string;
   latitude:number;
   longitude:number;
 
@@ -220,7 +221,7 @@ const Points: React.FC = () => {
           <View style={styles.mapMarkerContainer}>
               <Image 
               style={styles.mapMarkerImage}
-              source={{uri:'https://reactnative.dev/img/tiny_logo.png'}}/>
+              source={{uri:point.imageurl}}/>
               <Text style={styles.mapMarkerTitle}>
                  {point.name}
               </Text>

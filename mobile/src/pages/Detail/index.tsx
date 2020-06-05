@@ -94,6 +94,7 @@ interface Params{
 interface Data{
  point: {
    image:string;
+   imageurl:string;
    name: string;
    whatsapp: string;
    email: string;
@@ -145,7 +146,7 @@ const Detail: React.FC = () => {
         <Feather name="arrow-left" size={20} color='#34cd79' />
       </TouchableOpacity>
 
-      <Image style={styles.pointImage} source={{uri:'https://reactnative.dev/img/tiny_logo.png'}}/>
+      <Image style={styles.pointImage} source={{uri:data.point.imageurl}}/>
       <Text style={styles.pointName}>
          {data.point.name}
       </Text>
