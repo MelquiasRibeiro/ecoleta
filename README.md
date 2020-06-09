@@ -7,7 +7,7 @@ coleta quanto buscar novos pontos.
 
 
 a aplicação mobile foi desenvolvida utilizando o [React Native](https://reactnative.dev/) com [Expo](https://expo.io/learn),
-a web com [React.js](https://pt-br.reactjs.org/) e o backend com [Node.js](https://nodejs.org/en/docs/) com [Express](https://expressjs.com/pt-br/)e o orm [Knex](https://knexjs.org/)
+a web com [React.js](https://pt-br.reactjs.org/) e o backend com [Node.js](https://nodejs.org/en/docs/) com [Express](https://expressjs.com/pt-br/)e o orm [Knex](https://knexjs.org/).
 
 ## Conceitos abordados neste projeto:
 + Padronização de código com [Eslint](https://eslint.org/) e [Prettier](https://prettier.io/);
